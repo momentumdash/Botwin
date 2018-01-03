@@ -45,11 +45,11 @@ namespace Botwin
                 foreach (var module in scope.ServiceProvider.GetServices<BotwinModule>())
                 {
                     var moduleType = module.GetType();
-                    var distinctPaths = module.Routes.Keys.Select(route => route.path).Distinct();
+					var distinctRoutes = module.Routes.Keys.Select(route => new Tuple<string, string>(route.verb, route.path)).Distinct();
 
-                    foreach (var path in distinctPaths)
+					foreach (var path in distinctRoutes)
                     {
-                        routeBuilder.MapRoute(path, CreateRouteHandler(path, moduleType));
+						routeBuilder.MapVerb(path.Item1, path.Item2, CreateRouteHandler(path.Item2, moduleType));
                     }
                 }
             }
