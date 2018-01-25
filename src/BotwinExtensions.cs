@@ -175,8 +175,8 @@ namespace Botwin
 
             foreach (var module in modules)
             {
-                services.AddScoped(module);
-                services.AddScoped(typeof(BotwinModule), module);
+                services.AddSingleton(module);
+                services.AddSingleton(typeof(BotwinModule), module);
             }
 
             var schs = assemblies.SelectMany(x => x.GetTypes().Where(t => typeof(IStatusCodeHandler).IsAssignableFrom(t) && t != typeof(IStatusCodeHandler)));
