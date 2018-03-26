@@ -1,3 +1,5 @@
+using System.Net.NetworkInformation;
+
 namespace Botwin
 {
     using System;
@@ -57,11 +59,23 @@ namespace Botwin
             return builder.UseRouter(routeBuilder.Build());
         }
 
+	    private static Dictionary<Type,BotwinModule> _moduleDictionary = new Dictionary<Type, BotwinModule>();
+
         private static RequestDelegate CreateRouteHandler(string path, Type moduleType)
         {
             return async ctx =>
             {
-                var module = ctx.RequestServices.GetRequiredService(moduleType) as BotwinModule;
+	            BotwinModule module = null;
+
+	            if (_moduleDictionary.ContainsKey(moduleType))
+	            {
+		            module = _moduleDictionary[moduleType];
+	            }
+	            else
+	            {
+		            module = ctx.RequestServices.GetRequiredService(moduleType) as BotwinModule;
+					_moduleDictionary.Add(moduleType, module);
+	            }
 
                 if (!module.Routes.TryGetValue((ctx.Request.Method, path), out var routeHandler))
                 {
