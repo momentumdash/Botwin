@@ -10,6 +10,7 @@ namespace Botwin.Response
 
     public static class ResponseExtensions
     {
+	    private static IResponseNegotiator _jsonResponseNegotiator;
         /// <summary>
         /// Executes content negotiation on current <see cref="HttpResponse"/>, utilizing an accepted media type if possible and defaulting to "application/json" if none found.
         /// </summary>
@@ -37,11 +38,13 @@ namespace Botwin.Response
         /// <returns><see cref="Task"/></returns>
         public static async Task AsJson(this HttpResponse response, object obj, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var negotiators = response.HttpContext.RequestServices.GetServices<IResponseNegotiator>();
+	        if (_jsonResponseNegotiator == null)
+	        {
+		        var negotiators = response.HttpContext.RequestServices.GetServices<IResponseNegotiator>();
+		        _jsonResponseNegotiator = negotiators.FirstOrDefault(x => x.CanHandle(new List<MediaTypeHeaderValue>() {new MediaTypeHeaderValue("application/json")}));
+	        }
 
-            var negotiator = negotiators.FirstOrDefault(x => x.CanHandle(new List<MediaTypeHeaderValue>() { new MediaTypeHeaderValue("application/json") }));
-
-            await negotiator.Handle(response.HttpContext.Request, response, obj, cancellationToken);
+	        await _jsonResponseNegotiator.Handle(response.HttpContext.Request, response, obj, cancellationToken);
         }
     }
 }
