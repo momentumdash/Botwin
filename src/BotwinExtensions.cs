@@ -60,6 +60,7 @@ namespace Botwin
         }
 
 	    private static Dictionary<Type,BotwinModule> _moduleDictionary = new Dictionary<Type, BotwinModule>();
+	    private static Dictionary<int,IStatusCodeHandler> _statusCodeHandlers = new Dictionary<int, IStatusCodeHandler>();
 
         private static RequestDelegate CreateRouteHandler(string path, Type moduleType)
         {
@@ -74,7 +75,19 @@ namespace Botwin
 	            else
 	            {
 		            module = ctx.RequestServices.GetRequiredService(moduleType) as BotwinModule;
-					_moduleDictionary.Add(moduleType, module);
+		            // lock and check again before adding
+		            lock (_moduleDictionary)
+		            {
+			            if (!_moduleDictionary.ContainsKey(moduleType))
+				            _moduleDictionary.Add(moduleType, module);
+		            }
+	            }
+
+	            if (module == null)
+	            {
+		            // if we can't find a module, then return a 404
+		            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+		            return;
 	            }
 
                 if (!module.Routes.TryGetValue((ctx.Request.Method, path), out var routeHandler))
@@ -112,9 +125,23 @@ namespace Botwin
                     }
                 }
 
-                // run status code handler
-                var statusCodeHandlers = ctx.RequestServices.GetServices<IStatusCodeHandler>();
-                var scHandler = statusCodeHandlers.FirstOrDefault(x => x.CanHandle(ctx.Response.StatusCode));
+	            // run status code handler
+	            IStatusCodeHandler scHandler = null;
+	            if (_statusCodeHandlers.ContainsKey(ctx.Response.StatusCode))
+	            {
+		            scHandler = _statusCodeHandlers[ctx.Response.StatusCode];
+	            }
+	            else
+	            {
+		            var statusCodeHandlers = ctx.RequestServices.GetServices<IStatusCodeHandler>();
+		            scHandler = statusCodeHandlers.FirstOrDefault(x => x.CanHandle(ctx.Response.StatusCode));
+		            // lock and check again before adding
+		            lock (_statusCodeHandlers)
+		            {
+			            if (!_statusCodeHandlers.ContainsKey(ctx.Response.StatusCode))
+				            _statusCodeHandlers.Add(ctx.Response.StatusCode, scHandler);
+		            }
+	            }
 
                 if (scHandler != null)
                 {
