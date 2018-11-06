@@ -62,7 +62,7 @@ namespace Carter.Response
 	        if (_jsonResponseNegotiator == null)
 	        {
 		        var negotiators = response.HttpContext.RequestServices.GetServices<IResponseNegotiator>();
-		        _jsonResponseNegotiator = negotiators.FirstOrDefault(x => x.CanHandle(new List<MediaTypeHeaderValue>() {new MediaTypeHeaderValue("application/json")}));
+		        _jsonResponseNegotiator = negotiators.FirstOrDefault(x => x.CanHandle(new MediaTypeHeaderValue("application/json")));
 	        }
 	        await _jsonResponseNegotiator.Handle(response.HttpContext.Request, response, obj, cancellationToken);
         }
