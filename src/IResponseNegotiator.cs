@@ -1,4 +1,4 @@
-﻿namespace Botwin
+﻿namespace Carter
 {
     using System.Collections.Generic;
     using System.Threading;
@@ -13,7 +13,7 @@
         /// </summary>
         /// <param name="accept"><see cref="IList{MediaTypeHeaderValue}"/></param>
         /// <returns>True if any media types are acceptable, false if not</returns>
-        bool CanHandle(IList<MediaTypeHeaderValue> accept);
+        bool CanHandle(MediaTypeHeaderValue accept);
 
         /// <summary>
         /// Handles the response utilizing the given view model
